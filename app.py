@@ -3,10 +3,14 @@
 import os
 import requests
 import hmac, hashlib
+import logging
+import subprocess
 from dotenv import load_dotenv 
 from flask import Flask, jsonify, request, abort
 
 load_dotenv()
+
+logging.basicConfig(filename="app.log", level=logging.DEBUG)
 
 app = Flask(__name__)
 
@@ -14,8 +18,6 @@ app = Flask(__name__)
 def index():
 	auth = request.headers.get("X-Hub-Signature")
 	token = os.environ.get("secret_token")
-
-	print(request.json)
 
 	key = bytes(token, 'utf-8')
 	verify = hmac.new(key=key, msg=request.data, digestmod=hashlib.sha1).hexdigest()
@@ -36,11 +38,16 @@ def index():
 
 		validate_repo_on_sourcehut = requests.get("https://git.sr.ht/api/repos/{}".format(short_name))
 
+		if response["repository"]["private"] == True:
+			visibility = "private"
+		else:
+			visibility = "public"
+
 		if validate_repo_on_sourcehut.status_code != 200:
 			body = {
 				"name": short_name,
 				"description": response["repository"]["description"],
-				"visibility": "public"
+				"visibility": visibility
 			}
 
 			create_repo = requests.post("https://git.sr.ht/api/repo", data=body)
