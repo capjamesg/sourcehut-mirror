@@ -74,4 +74,4 @@ def not_found_error(error):
 	return jsonify(message)
 
 if __name__ == '__main__':
-	app.run(debug=True, port=4567)
+	app.run(debug=True)
